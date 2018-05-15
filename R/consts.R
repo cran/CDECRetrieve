@@ -1,19 +1,17 @@
-# constants used through out package
-
-#' Constant urls for data retrieval
+# Constant urls for data retrieval
 cdec_urls <- list(
 
-  download_shef = "http://cdec.water.ca.gov/cgi-progs/querySHEF?station_id=STATION&sensor_num=SENSOR&dur_code=DURCODE&start_date=STARTDATE&end_date=ENDDATE&data_wish=Download+SHEF+Data+Now",
+  download_shef = "http://cdec.water.ca.gov/cgi-progs/querySHEF?station_id={STATION}&sensor_num={SENSOR}&dur_code={DURCODE}&start_date={STARTDATE}&end_date={ENDDATE}&data_wish=Download+SHEF+Data+Now",
   wy_forecast = "http://cdec.water.ca.gov/cgi-progs/iodir/wsi",
   station_hydro_area = "http://cdec.water.ca.gov/cgi-progs/staMeta?station_id=STATION",
   station_metadata = "https://cdec.water.ca.gov/cgi-progs/staSearch?sta_chk=on&sta=STATION",
   datasets = "http://cdec.water.ca.gov/cgi-progs/selectQuery",
-  rating_tables = "http://cdec.water.ca.gov/rtables/"
-
+  rating_tables = "http://cdec.water.ca.gov/rtables/{STATION}.html",
+  wy_index = "http://cdec.water.ca.gov/cgi-progs/iodir/wsi"
 )
 
 
-#' Look up table to go from SHEF Code ---> CDEC Param Code
+# Look up table to go from SHEF Code ---> CDEC Param Code
 shef_code_lookup <- list(
   "/HGH" = "1", #stage
   "/HGE" = "1", #stage
@@ -51,6 +49,7 @@ shef_code_lookup <- list(
   "/LRH" = "94",
   "/TAD" = "30",
   "/TAH" = "04",
-  "/QMD" = "8"
+  "/QMD" = "8",
+  "/PPM" = "45"
 
 )

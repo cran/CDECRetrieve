@@ -12,7 +12,10 @@ map_stations(.data, ...)
 \item{...}{named arguments passed into leaflet::addCircleMarkers}
 }
 \description{
-Populate a leaflet map with the results of cdec_stations() call
+Populate a leaflet map with the results of cdec_stations() call. The function
+makes use of leaflet, and so will work only if this is installed on the system.
+This function is bundled simply for exploration purposes, it is highly suggested
+to make use of leaflet for production maps.
 }
 \examples{
 if (interactive()) {

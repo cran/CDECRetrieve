@@ -4,8 +4,8 @@
 \alias{cdec_query}
 \title{Query observation data}
 \usage{
-cdec_query(station, sensor_num = NULL, dur_code = NULL, start_date = NULL,
-  end_date = NULL)
+cdec_query(station, sensor_num, dur_code, start_date = NULL,
+  end_date = NULL, tzone = "America/Los_Angeles")
 }
 \arguments{
 \item{station}{three letter identification for CDEC location (example "KWK", "SAC", "CCR")}
@@ -17,9 +17,11 @@ cdec_query(station, sensor_num = NULL, dur_code = NULL, start_date = NULL,
 \item{start_date}{date to start the query on.}
 
 \item{end_date}{a date to end query on, defaults to current date.}
+
+\item{tzone}{a time zone to attached to datetime objects in R}
 }
 \value{
-tidy dataframe
+dataframe
 }
 \description{
 Function queries the CDEC site to obtain desired station data
@@ -27,6 +29,8 @@ based on station, sensor number, duration code and start/end date.
 Use cdec_datasets() to view an updated list of all available data at a station.
 }
 \examples{
+\dontrun{
 kwk_hourly_flows <- CDECRetrieve::cdec_query("KWK", "20", "H", "2017-01-01")
 ccr_hourly_temps <- CDECRetrieve::cdec_query("CCR", "25", "H", Sys.Date())
+}
 }

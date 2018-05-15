@@ -1,7 +1,7 @@
 Package: CDECRetrieve
 Type: Package
 Title: Retrieve Historical and Near Realtime Data from CDEC
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Emanuel", "Rodriguez", email = "erodriguez@flowwest.com", role = c("aut", "cre"))
 Description: CDEC maintains a set of web services at <http://cdec.water.ca.gov/queryTools.html>.
       In order to better interact and analyze the data this R packages allows
@@ -13,12 +13,13 @@ Depends: R (>= 3.1.2)
 Imports: dplyr (>= 0.7.0), tidyr (>= 0.7), magrittr (>= 1.5), purrr (>=
         0.2), readr (>= 1.1.1), roxygen2, rvest (>= 0.3), xml2, stringr
         (>= 1.2.0), tibble, lubridate (>= 1.6.0), httr (>= 1.3.1),
-        lazyeval
-Suggests: testthat, leaflet
+        lazyeval, glue
+Suggests: testthat, leaflet, knitr, rmarkdown, ggplot2
 License: MIT + file LICENSE
+VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2018-02-28 20:06:57 UTC; emanuel
+Packaged: 2018-05-15 19:06:56 UTC; emanuel
 Author: Emanuel Rodriguez [aut, cre]
 Maintainer: Emanuel Rodriguez <erodriguez@flowwest.com>
 Repository: CRAN
-Date/Publication: 2018-03-01 09:45:37 UTC
+Date/Publication: 2018-05-15 19:19:53 UTC

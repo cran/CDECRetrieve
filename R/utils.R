@@ -24,3 +24,5 @@ get_cdec_serivce <- function(o) {
 missing_xml <- function(.) {
   identical(., xml2::xml_missing())
 }
+
+

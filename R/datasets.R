@@ -1,45 +1,15 @@
-#' Function returns a dataframe of the available data
-#' @param station a three letter cdec station
-#' @examples
-#' # get a list of dataframes available for CCR
-#' cdec_datasets("ccr")
-#' @return dataframe of available data for station
-#' @export
-cdec_available <- function(station) {
-
-  .Deprecated("cdec_datasets", package = "CDECRetrieve",
-              msg = "function has been deprecated use `cdec_datasets()` instead")
-
-  cdec_datasets(station)
-}
-
 #' @title Show available data
 #' @description display a data frame of available data for a station.
 #' @param station cdec station code
 #' @return data frame with available data as rows.
 #' @examples
 #' # get a list of dataframes available for CCR
+#' \dontrun{
 #' cdec_datasets("ccr")
+#' }
 #' @export
 cdec_datasets <- function(station) {
-  resp <- cdec_datasets_service(station)
 
-  # minor cleaning of the data
-  datasets <- parse_dataset_resp(resp)
-  attr(datasets, "cdec_service") <- "datasets"
-  return(datasets)
-}
-
-
-
-# INTERNAL
-
-
-#' Function forms url and fetches the raw table from cdec datasets "service"
-#' @param station station to retrieve available data for
-#' @return a raw table turned to dataframe from cdec service
-cdec_datasets_service <- function(station) {
-  # form the request for the url
   query <- list(station_id=station,
                 sensor_num=NULL)
 
@@ -52,16 +22,18 @@ cdec_datasets_service <- function(station) {
          call. = FALSE)
   }
 
-  resp_at_table <- rvest::html_table(resp_at_node)[[1]]
+  raw_data <- rvest::html_table(resp_at_node)[[1]]
 
-  return(resp_at_table)
-
+  # minor cleaning of the data
+  d <- clean_datasets_resp(raw_data)
+  class(d) <- append(class(d), "cdec_datasets")
+  return(d)
 }
 
-#' Function parses a response from CDEC available data service
-#' @param df a response table from cdec via the function call_cdec_avail_service
-#' @return parsed version of table returned from cdec
-parse_dataset_resp <- function(df) {
+
+
+# Function parses a response from CDEC available data service
+clean_datasets_resp <- function(df) {
 
 
   sensor_number <- df$X1
@@ -85,7 +57,7 @@ parse_dataset_resp <- function(df) {
   end_range <- stringr::str_replace_all(
     stringr::str_extract(daterange_raw, "to(.*)"), "to |\\.", "")
 
-  # eh, not functional but its aite
+  # eh, not functional but its ok
   end <- lubridate::as_date(
     ifelse(end_range == "present", lubridate::today(), lubridate::mdy(end_range)))
 
