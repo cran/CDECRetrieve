@@ -6,7 +6,7 @@
 #' @param sensor_num sensor number for the measure of interest. (example "20", "01", "25")
 #' @param dur_code duration code for measure interval, "E", "H", "D", which correspong to Event, Hourly and Daily.
 #' @param start_date date to start the query on.
-#' @param end_date a date to end query on, defaults to current date.
+#' @param end_date an optional date to end query on, defaults to current date.
 #' @param tzone a time zone to attached to datetime objects in R
 #' @return dataframe
 #' @examples
@@ -16,9 +16,24 @@
 #' }
 #' @export
 cdec_query <- function(station, sensor_num, dur_code,
-                       start_date=NULL, end_date=NULL, tzone='America/Los_Angeles') {
+                       start_date=NULL, end_date=NULL,
+                       tzone='America/Los_Angeles') {
 
-  if (is.null(start_date)) {start_date <- Sys.Date() - 2} # an arbitrary choice
+  if (!any(tolower(dur_code) == c("h", "d", "m", "e"))) {
+    stop("'dur_code' can only be one of 'h', 'd', 'm', 'e'",
+         call. = FALSE)
+  }
+
+
+  # determine default choices
+  if (is.null(start_date)) {
+    start_date <- switch (tolower(dur_code),
+      "e" = Sys.Date() - 2, # 2 days of data
+      "h" = Sys.Date() - 2, # 2 days of data
+      "m" = Sys.Date() - 90, # around 3 months
+      "d" = Sys.Date() - 30 # month of data
+    )}
+
   if (is.null(end_date)) {end_date <- Sys.Date() + 1}
 
   # decision was made here not to use httr::GET, since downloading a file
@@ -37,55 +52,55 @@ cdec_query <- function(station, sensor_num, dur_code,
 
   temp_file <- tempfile(tmpdir = tempdir())
 
-  if(!(utils::download.file(query_url, destfile = temp_file, quiet = TRUE))) {
-    # check if the file size downloaded has a size
-    if (file.info(temp_file)$size == 0) {
-      stop("call to cdec failed...", call. = FALSE)
-    }
-
-    d <- suppressWarnings(shef_to_tidy(temp_file, tzone))
-
-    if (is.null(d)) {
-      stop(paste("station:", station, "failed"), call. = FALSE)
-    }
-  } else {
+  if(utils::download.file(query_url, destfile = temp_file, quiet = TRUE)) {
     stop("call to cdec failed for uknown reason, check http://cdec.water.ca.gov for status",
          call. = FALSE)
   }
 
-  class(d) <- append(class(d), "cdec_data")
-  return(d)
-}
-
-
-# function uses a file on disk to process from shef to a tidy format
-shef_to_tidy <- function(file, tzone) {
-
-  #keep these columns which are: location_id, date, time, sensor_code, value
-  cols_to_keep <- c(2, 3, 5, 6, 7)
-
-  raw <- readr::read_delim(file, skip = 8, col_names = FALSE, delim = " ")
-
-  # exit out when the dataframe is not the right width
-  if (ncol(raw) < 5) {
-    return(NULL)
+  # check if the file size downloaded has a size
+  if (file.info(temp_file)$size == 0) {
+    stop("call to cdec failed, please visit https://cdec.water.ca.gov/ for status on their services", call. = FALSE)
   }
 
-  raw <- raw[, cols_to_keep]
+  shef_to_tidy <- function(file, tzone) {
 
-  # parse required cols
-  datetime_col <- lubridate::ymd_hm(paste0(raw$X3, raw$X5), tz=tzone)
-  shef_code <- raw$X6[1]
-  cdec_code <- ifelse(is.null(shef_code_lookup[[shef_code]]),
-                      NA, shef_code_lookup[[shef_code]])
-  cdec_code_col <- rep(cdec_code, nrow(raw))
-  parameter_value_col <- as.numeric(raw$X7)
+    #keep these columns which are: location_id, date, time, sensor_code, value
+    cols_to_keep <- c(2, 3, 5, 6, 7)
 
-  tibble::tibble(
-    "agency_cd" = "CDEC",
-    "location_id" = as.character(raw$X2),
-    "datetime" = datetime_col,
-    "parameter_cd" = as.character(cdec_code_col),
-    "parameter_value" = parameter_value_col
-  )
+    raw <- readr::read_delim(file, skip = 8, col_names = FALSE, delim = " ")
+
+    # exit out when the dataframe is not the right width
+    if (ncol(raw) < 5) {
+      return(NULL)
+    }
+
+    raw <- raw[, cols_to_keep]
+
+    # parse required cols
+    datetime_col <- lubridate::ymd_hm(paste0(raw$X3, raw$X5), tz=tzone)
+    shef_code <- raw$X6[1]
+    cdec_code <- ifelse(is.null(shef_code_lookup[[shef_code]]),
+                        NA, shef_code_lookup[[shef_code]])
+    cdec_code_col <- rep(cdec_code, nrow(raw))
+    parameter_value_col <- as.numeric(raw$X7)
+
+    tibble::tibble(
+      "agency_cd" = "CDEC",
+      "location_id" = as.character(raw$X2),
+      "datetime" = datetime_col,
+      "parameter_cd" = as.character(cdec_code_col),
+      "parameter_value" = parameter_value_col
+    )
+  }
+
+
+  d <- suppressWarnings(shef_to_tidy(temp_file, tzone))
+
+  if (is.null(d)) {
+    stop(paste(station,
+               "prasing failed, but a file was returned from CDEC, please check the query, use 'cdec_datasets()' to confirm the dataset exists"), call. = FALSE)
+  }
+
+  class(d) <- append(class(d), "cdec_data")
+  return(d)
 }

@@ -1,3 +1,7 @@
+# CDECRetrieve 0.1.2
+
+* update code to reflect recent changes on CDEC.gov, namely use the SHEF endpoint for `cdec_datasets()`.
+
 # CDECRetrieve 0.1.1 
 
 * `cdec_query` now correctly does not force strings as factors.
@@ -9,6 +13,4 @@
 
 * Version available through CRAN
 * Added a `NEWS.md` file to track changes to the package.
-
-
 
