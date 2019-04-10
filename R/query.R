@@ -1,13 +1,16 @@
-#' @title Query observation data
-#' @description Function queries the CDEC site to obtain desired station data
+#' Query observation data
+#'
+#' Function queries the CDEC site to obtain desired station data
 #' based on station, sensor number, duration code and start/end date.
 #' Use cdec_datasets() to view an updated list of all available data at a station.
+#'
 #' @param station three letter identification for CDEC location (example "KWK", "SAC", "CCR")
 #' @param sensor_num sensor number for the measure of interest. (example "20", "01", "25")
 #' @param dur_code duration code for measure interval, "E", "H", "D", which correspong to Event, Hourly and Daily.
 #' @param start_date date to start the query on.
 #' @param end_date an optional date to end query on, defaults to current date.
-#' @param tzone a time zone to attached to datetime objects in R
+#' @param tzone a time zone used. By default this is America/Los_Angeles, this accounts
+#' for daylight saving.
 #' @return dataframe
 #' @examples
 #' \dontrun{
@@ -65,16 +68,15 @@ cdec_query <- function(station, sensor_num, dur_code,
   shef_to_tidy <- function(file, tzone) {
 
     #keep these columns which are: location_id, date, time, sensor_code, value
-    cols_to_keep <- c(2, 3, 5, 6, 7)
 
-    raw <- readr::read_delim(file, skip = 8, col_names = FALSE, delim = " ")
+    raw <- suppressMessages(readr::read_delim(file, skip = 8, col_names = FALSE, delim = " "))
 
     # exit out when the dataframe is not the right width
     if (ncol(raw) < 5) {
       return(NULL)
     }
 
-    raw <- raw[, cols_to_keep]
+    raw <- raw[, c(2, 3, 5, 6, 7)]
 
     # parse required cols
     datetime_col <- lubridate::ymd_hm(paste0(raw$X3, raw$X5), tz=tzone)
@@ -101,6 +103,5 @@ cdec_query <- function(station, sensor_num, dur_code,
                "prasing failed, but a file was returned from CDEC, please check the query, use 'cdec_datasets()' to confirm the dataset exists"), call. = FALSE)
   }
 
-  class(d) <- append(class(d), "cdec_data")
   return(d)
 }

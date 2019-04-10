@@ -1,12 +1,13 @@
-# need to gather the rating cols, and then sep on "_" then use the decimal part
-# to add to the stage, and then this should just give the result that we want.
-
-#' @title Get a rating table
-#' @description Use  station id to find the rating table for stage to flow used by CDEC.
+#' Get a rating table
+#'
+#' Use  station id to find the rating table for stage to flow used by CDEC.
+#'
 #' @param station_id three letter CDEC station id
 #' @return dataframe of rating table, with stage (feet) and flow (cfs) as columns
 #' @examples
+#' \dontrun{
 #' cdec_rt("abj") # get the stage to rating curve for ABJ
+#' }
 #' @export
 cdec_rt <- function(station_id) {
   if (!rating_is_available(station_id)) {
@@ -19,6 +20,13 @@ cdec_rt <- function(station_id) {
   rating_table_page <- xml2::read_html(rating_table_url)
   raw_rating_table <- rvest::html_table(rvest::html_node(rating_table_page, "table"),
                                         fill = TRUE, header = FALSE)
+
+  rating_table_revised_on <-
+    rating_table_page %>%
+    rvest::html_nodes("h3") %>%
+    rvest::html_text() %>%
+    magrittr::extract(2) %>%
+    stringr::str_extract("[0-9]+/[0-9]+/[0-9]+")
 
   colnames_to_be <- paste0("rating_", as.character(raw_rating_table[2, ]))
   rating_table <- raw_rating_table[-c(1, 2), ]
@@ -34,7 +42,7 @@ cdec_rt <- function(station_id) {
   rt_mutate <- rt_sep # copy, i dont like overwritting
   rt_mutate$rating_stage <- rt_sep$`rating_Stage (feet)` + as.numeric(rt_sep$precision)
 
-  return(dplyr::select(rt_mutate, "rating_stage", "flow"="value"))
+  return(dplyr::transmute(rt_mutate, rating_stage, flow=value, revised_on=rating_table_revised_on))
 }
 
 #' @title List Rating Tables
@@ -42,7 +50,9 @@ cdec_rt <- function(station_id) {
 #' @param station_id station for the location to get rating description for.
 #' @examples
 #' # list all rating tables in CDEC, you can use filter to search
+#' \dontrun{
 #' cdec_rt_list()
+#' }
 #' @export
 cdec_rt_list <- function(station_id = NULL) {
   url <- "http://cdec.water.ca.gov/rtables/"
