@@ -4,8 +4,13 @@
 \alias{cdec_stations}
 \title{Search CDEC Stations}
 \usage{
-cdec_stations(station_id = NULL, nearby_city = NULL,
-  river_basin = NULL, hydro_area = NULL, county = NULL)
+cdec_stations(
+  station_id = NULL,
+  nearby_city = NULL,
+  river_basin = NULL,
+  hydro_area = NULL,
+  county = NULL
+)
 }
 \arguments{
 \item{station_id}{string three letter station code}
@@ -18,15 +23,24 @@ cdec_stations(station_id = NULL, nearby_city = NULL,
 
 \item{county}{string search stations in supplied county}
 }
+\value{
+data frame with queried stations as rows and
+columns describing the \code{station_id}, \code{name}, \code{river_basin}, \code{county}, \code{longitude},
+\code{latitude}, \code{elevation}, \code{operator}, and \code{state}
+}
 \description{
 Search the stations in the CDEC system using the CDEC Station Search
-service \href{https://cdec.water.ca.gov/cgi-progs/staSearch}{here}. Combinations
+service \href{https://cdec.water.ca.gov/dynamicapp/staSearch}{here}. Combinations
 of these parameters can be supplied to refine or be left out to generalize, at least
 one must be supplied.
 }
 \examples{
 # cdec_stations() can be used to find locations within an area of interest
+\dontrun{
 cdec_stations(county = "alameda")
+}
 # or it can be used to get metadata attributes for a location
+\dontrun{
 cdec_stations(station_id = "ccr")
+}
 }

@@ -3,6 +3,8 @@
 #' display a data frame of available data for a station.
 #'
 #' @param station cdec station code
+#' @param keyword return sensors containing this keyword. NULL by default returns
+#' all available sensors.
 #' @return data frame with available data as rows.
 #' @examples
 #' # get a list of dataframes available for CCR
@@ -10,17 +12,15 @@
 #' cdec_datasets("ccr")
 #' }
 #' @export
-cdec_datasets <- function(station) {
-
+cdec_datasets <- function(station, keyword=NULL) {
   query <- list(station_id=station,
                 sensor_num=NULL)
 
-  # resp <- httr::GET(cdec_urls$datasets, query=query)
-
   resp <- tryCatch(
-    httr::GET(cdec_urls$datasets, query=query),
+    httr::GET("https://cdec.water.ca.gov/cgi-progs/querySHEF", query=query),
     error = function(e) {
-      stop("CDEC could not be reached, it is most likekly down for maintenance.")
+      stop("Could not reach CDEC services",
+           call. = FALSE)
     }
   )
 
@@ -36,14 +36,25 @@ cdec_datasets <- function(station) {
 
   raw_data <- rvest::html_table(resp_at_node)[[1]]
 
-  clean_datasets_resp(raw_data)
+  sensor_name <- NULL # global variable workaround
+  d <- suppressWarnings(clean_datasets_resp(raw_data))
+
+  if (is.null(keyword)) {
+    return(d)
+  } else {
+    dd <- dplyr::filter(d, grepl(sensor_name, keyword))
+    if (nrow(dd) == 0) {
+      message("no sensors matching the keyword were found, returning full list")
+      return(d)
+    } else {
+      return(dd)
+    }
+  }
 }
 
 # INTERNAL -----
 
 clean_datasets_resp <- function(df) {
-
-
   sensor_number <- df$X1
   sensor_desciption_raw <- tolower(df$X2)
 
@@ -65,10 +76,8 @@ clean_datasets_resp <- function(df) {
   end_range <- stringr::str_replace_all(
     stringr::str_extract(daterange_raw, "to(.*)"), "to |\\.", "")
 
-  # eh, not functional but its ok
   end <- lubridate::as_date(
     ifelse(end_range == "present", lubridate::today(), lubridate::mdy(end_range)))
-
 
   tibble::tibble(
     sensor_number,

@@ -4,8 +4,14 @@
 \alias{cdec_query}
 \title{Query observation data}
 \usage{
-cdec_query(station, sensor_num, dur_code, start_date = NULL,
-  end_date = NULL, tzone = "America/Los_Angeles")
+cdec_query(
+  station,
+  sensor_num,
+  dur_code,
+  start_date = NULL,
+  end_date = NULL,
+  tzone = "America/Los_Angeles"
+)
 }
 \arguments{
 \item{station}{three letter identification for CDEC location (example "KWK", "SAC", "CCR")}
@@ -22,12 +28,12 @@ cdec_query(station, sensor_num, dur_code, start_date = NULL,
 for daylight saving.}
 }
 \value{
-dataframe
+data frame containing queried data from CDEC for a specific station, sensor, and date range
 }
 \description{
 Function queries the CDEC site to obtain desired station data
 based on station, sensor number, duration code and start/end date.
-Use cdec_datasets() to view an updated list of all available data at a station.
+Use `cdec_datasets()` to view an updated list of all available data at a station.
 }
 \examples{
 \dontrun{

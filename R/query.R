@@ -2,7 +2,7 @@
 #'
 #' Function queries the CDEC site to obtain desired station data
 #' based on station, sensor number, duration code and start/end date.
-#' Use cdec_datasets() to view an updated list of all available data at a station.
+#' Use `cdec_datasets()` to view an updated list of all available data at a station.
 #'
 #' @param station three letter identification for CDEC location (example "KWK", "SAC", "CCR")
 #' @param sensor_num sensor number for the measure of interest. (example "20", "01", "25")
@@ -11,7 +11,7 @@
 #' @param end_date an optional date to end query on, defaults to current date.
 #' @param tzone a time zone used. By default this is America/Los_Angeles, this accounts
 #' for daylight saving.
-#' @return dataframe
+#' @return data frame containing queried data from CDEC for a specific station, sensor, and date range
 #' @examples
 #' \dontrun{
 #' kwk_hourly_flows <- CDECRetrieve::cdec_query("KWK", "20", "H", "2017-01-01")
@@ -22,9 +22,18 @@ cdec_query <- function(station, sensor_num, dur_code,
                        start_date=NULL, end_date=NULL,
                        tzone='America/Los_Angeles') {
 
-  if (!any(tolower(dur_code) == c("h", "d", "m", "e"))) {
-    stop("'dur_code' can only be one of 'h', 'd', 'm', 'e'",
+  if (!any(tolower(dur_code) == c("h", "d", "m", "e",
+                                  "hourly", "daily", "monthly", "event"))) {
+    stop("'dur_code' can only be one of 'h/hourly', 'd/daily', 'm/monthly', 'e/event'",
          call. = FALSE)
+  }
+
+  if (dur_code %in% c("hourly", "daily", "monthly", "event")) {
+    dur_code <-
+      as.character(c("hourly"="h",
+                     "daily"="d",
+                     "monhtly"="m",
+                     "event"="e")[dur_code])
   }
 
 
@@ -39,26 +48,22 @@ cdec_query <- function(station, sensor_num, dur_code,
 
   if (is.null(end_date)) {end_date <- Sys.Date() + 1}
 
-  # decision was made here not to use httr::GET, since downloading a file
-  # is much more reliable and faster from CDEC, it for some reason does not
-  # handle large queries very well unless they are downloads.
-  # I am still working on hopefully switching over to a combination
-  # of httr and purrr but for now this works well.
-  #                               -ergz
-
-  query_url <- glue::glue(cdec_urls$download_shef,
-                          STATION=station,
-                          SENSOR = as.character(sensor_num),
-                          DURCODE = as.character(dur_code),
-                          STARTDATE = as.character(start_date),
-                          ENDDATE = as.character(end_date))
+  query_url <- sprintf("http://cdec.water.ca.gov/cgi-progs/querySHEF?station_id=%s&sensor_num=%s&dur_code=%s&start_date=%s&end_date=%s&data_wish=Download+SHEF+Data+Now",
+                       station,
+                       as.character(sensor_num),
+                       as.character(dur_code),
+                       as.character(start_date),
+                       as.character(end_date))
 
   temp_file <- tempfile(tmpdir = tempdir())
 
-  if(utils::download.file(query_url, destfile = temp_file, quiet = TRUE)) {
-    stop("call to cdec failed for uknown reason, check http://cdec.water.ca.gov for status",
-         call. = FALSE)
-  }
+  tryCatch(
+    utils::download.file(query_url, destfile = temp_file, quiet = TRUE),
+    warning = function(w) stop("call to cdec failed for uknown reason, check http://cdec.water.ca.gov for status",
+                               call. = FALSE),
+    error = function(e) stop("call to cdec failed for uknown reason, check http://cdec.water.ca.gov for status",
+                             call. = FALSE)
+  )
 
   # check if the file size downloaded has a size
   if (file.info(temp_file)$size == 0) {
@@ -100,7 +105,7 @@ cdec_query <- function(station, sensor_num, dur_code,
 
   if (is.null(d)) {
     stop(paste(station,
-               "prasing failed, but a file was returned from CDEC, please check the query, use 'cdec_datasets()' to confirm the dataset exists"), call. = FALSE)
+               "parsing failed, but a file was returned from CDEC, please check the query, use 'cdec_datasets()' to confirm the dataset exists"), call. = FALSE)
   }
 
   return(d)
